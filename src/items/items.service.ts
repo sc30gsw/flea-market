@@ -5,8 +5,8 @@ import { Item } from './item.model'
 export class ItemsService {
   private items: Item[] = []
 
-  findAll() {
-    return 'This is ItemsService'
+  findAll(): Item[] {
+    return this.items
   }
 
   create(item: Item): Item {
