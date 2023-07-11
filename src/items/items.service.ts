@@ -3,7 +3,6 @@ import { Item } from './item.model'
 import { ItemStatus } from './item-status.enum'
 import { CreateItemDto } from './dto/create-item.dto'
 import { v4 as uuid } from 'uuid'
-import { NotFoundError } from 'rxjs'
 
 @Injectable()
 export class ItemsService {
