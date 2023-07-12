@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common'
 import { ItemStatus } from './item-status.enum'
 import { CreateItemDto } from './dto/create-item.dto'
-import { v4 as uuid } from 'uuid'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Item } from '@/entities/item.entity'
@@ -19,16 +18,21 @@ export class ItemsService {
 
   private items: Item[] = []
 
-  findAll(): Item[] {
-    return this.items
+  async findAll(): Promise<Item[]> {
+    const items = await this.itemsRepository.find().catch((e) => {
+      throw new InternalServerErrorException(e.message)
+    })
+
+    return items
   }
 
-  findById(id: string): Item {
-    const item = this.items.find((item) => item.id === id)
+  async findById(id: string): Promise<Item> {
+    const item = await this.itemsRepository.findOneBy({ id })
 
-    if (!item) throw new NotFoundException()
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
 
-    return this.items.find((item) => item.id === id)
+    return item
   }
 
   async create(createItemDto: CreateItemDto): Promise<Item> {
