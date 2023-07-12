@@ -6,7 +6,7 @@ import {
 import { ItemStatus } from './item-status.enum'
 import { CreateItemDto } from './dto/create-item.dto'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { DeleteResult, Repository, UpdateResult } from 'typeorm'
 import { Item } from '@/entities/item.entity'
 
 @Injectable()
@@ -54,14 +54,31 @@ export class ItemsService {
     return item
   }
 
-  updateStatus(id: string): Item {
-    const item = this.items.find((item) => item.id === id)
-    item.status = ItemStatus.SOLD_OUT
+  async updateStatus(id: string): Promise<UpdateResult> {
+    const item = await this.itemsRepository.findOneBy({ id })
 
-    return item
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    const updatedItem = await this.itemsRepository
+      .update(item.id, { status: ItemStatus.SOLD_OUT })
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message)
+      })
+
+    return updatedItem
   }
 
-  delete(id: string): void {
-    this.items = this.items.filter((item) => item.id !== id)
+  async delete(id: string): Promise<DeleteResult> {
+    const item = await this.itemsRepository.findOneBy({ id })
+
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    const deletedItem = await this.itemsRepository.delete(id).catch((e) => {
+      throw new InternalServerErrorException(e.message)
+    })
+
+    return deletedItem
   }
 }

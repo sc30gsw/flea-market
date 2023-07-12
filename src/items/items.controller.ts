@@ -11,6 +11,7 @@ import {
 import { ItemsService } from './items.service'
 import { Item } from '@/entities/item.entity'
 import { CreateItemDto } from './dto/create-item.dto'
+import { DeleteResult, UpdateResult } from 'typeorm'
 
 @Controller('items')
 export class ItemsController {
@@ -32,12 +33,14 @@ export class ItemsController {
   }
 
   @Patch(':id')
-  updateStatus(@Param('id', ParseUUIDPipe) id: string): Item {
-    return this.itemsService.updateStatus(id)
+  async updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<UpdateResult> {
+    return await this.itemsService.updateStatus(id)
   }
 
   @Delete(':id')
-  delete(@Param('id', ParseUUIDPipe) id: string): void {
-    this.itemsService.delete(id)
+  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<DeleteResult> {
+    return await this.itemsService.delete(id)
   }
 }
