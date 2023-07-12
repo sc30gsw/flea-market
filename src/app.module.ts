@@ -1,20 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ItemsModule } from './items/items.module'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { AppDataSource } from './data-source'
 
 @Module({
-  imports: [
-    ItemsModule,
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'password',
-      database: 'flea-market',
-      autoLoadEntities: true,
-    }),
-  ],
+  imports: [ItemsModule, TypeOrmModule.forRoot(AppDataSource.options)],
   controllers: [],
   providers: [],
 })
