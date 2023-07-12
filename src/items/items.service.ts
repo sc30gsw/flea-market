@@ -1,45 +1,85 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { Item } from './item.model'
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
 import { ItemStatus } from './item-status.enum'
 import { CreateItemDto } from './dto/create-item.dto'
-import { v4 as uuid } from 'uuid'
-import { NotFoundError } from 'rxjs'
+import { InjectRepository } from '@nestjs/typeorm'
+import { DeleteResult, Repository, UpdateResult } from 'typeorm'
+import { Item } from '@/entities/item.entity'
 
 @Injectable()
 export class ItemsService {
-  private items: Item[] = []
+  constructor(
+    @InjectRepository(Item)
+    private itemsRepository: Repository<Item>,
+  ) {}
 
-  findAll(): Item[] {
-    return this.items
+  async findAll(): Promise<Item[]> {
+    const items = await this.itemsRepository.find().catch((e) => {
+      throw new InternalServerErrorException(e.message)
+    })
+
+    return items
   }
 
-  findById(id: string): Item {
-    const item = this.items.find((item) => item.id === id)
+  async findById(id: string): Promise<Item> {
+    const item = await this.itemsRepository.findOneBy({ id })
 
-    if (!item) throw new NotFoundException()
-
-    return this.items.find((item) => item.id === id)
-  }
-
-  create(createItemDto: CreateItemDto): Item {
-    const item: Item = {
-      id: uuid(),
-      ...createItemDto,
-      status: ItemStatus.ON_SALE,
-    }
-    this.items.push(item)
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
 
     return item
   }
 
-  updateStatus(id: string): Item {
-    const item = this.items.find((item) => item.id === id)
-    item.status = ItemStatus.SOLD_OUT
+  async create(createItemDto: CreateItemDto): Promise<Item> {
+    const { name, price, description } = createItemDto
+
+    const item = await this.itemsRepository
+      .save({
+        name,
+        price,
+        description,
+        status: ItemStatus.ON_SALE,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message)
+      })
 
     return item
   }
 
-  delete(id: string): void {
-    this.items = this.items.filter((item) => item.id !== id)
+  async updateStatus(id: string): Promise<UpdateResult> {
+    const item = await this.itemsRepository.findOneBy({ id })
+
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    const updatedItem = await this.itemsRepository
+      .update(item.id, {
+        status: ItemStatus.SOLD_OUT,
+        updatedAt: new Date().toISOString(),
+      })
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message)
+      })
+
+    return updatedItem
+  }
+
+  async delete(id: string): Promise<DeleteResult> {
+    const item = await this.itemsRepository.findOneBy({ id })
+
+    if (!item)
+      throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    const deletedItem = await this.itemsRepository.delete(id).catch((e) => {
+      throw new InternalServerErrorException(e.message)
+    })
+
+    return deletedItem
   }
 }
