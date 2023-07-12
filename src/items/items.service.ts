@@ -16,8 +16,6 @@ export class ItemsService {
     private itemsRepository: Repository<Item>,
   ) {}
 
-  private items: Item[] = []
-
   async findAll(): Promise<Item[]> {
     const items = await this.itemsRepository.find().catch((e) => {
       throw new InternalServerErrorException(e.message)
@@ -61,7 +59,10 @@ export class ItemsService {
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
 
     const updatedItem = await this.itemsRepository
-      .update(item.id, { status: ItemStatus.SOLD_OUT })
+      .update(item.id, {
+        status: ItemStatus.SOLD_OUT,
+        updatedAt: new Date().toISOString(),
+      })
       .catch((e) => {
         throw new InternalServerErrorException(e.message)
       })
