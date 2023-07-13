@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -8,6 +9,7 @@ import { CreateItemDto } from './dto/create-item.dto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DeleteResult, Repository, UpdateResult } from 'typeorm'
 import { Item } from '@/entities/item.entity'
+import { User } from '@/entities/user.entity'
 
 @Injectable()
 export class ItemsService {
@@ -33,7 +35,7 @@ export class ItemsService {
     return item
   }
 
-  async create(createItemDto: CreateItemDto): Promise<Item> {
+  async create(createItemDto: CreateItemDto, user: User): Promise<Item> {
     const { name, price, description } = createItemDto
 
     const item = await this.itemsRepository
@@ -44,6 +46,7 @@ export class ItemsService {
         status: ItemStatus.ON_SALE,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        user,
       })
       .catch((e) => {
         throw new InternalServerErrorException(e.message)
@@ -52,11 +55,14 @@ export class ItemsService {
     return item
   }
 
-  async updateStatus(id: string): Promise<UpdateResult> {
+  async updateStatus(id: string, user: User): Promise<UpdateResult> {
     const item = await this.itemsRepository.findOneBy({ id })
 
     if (!item)
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    if (item.userId === user.id)
+      throw new BadRequestException('自身の商品を購入することはできません')
 
     const updatedItem = await this.itemsRepository
       .update(item.id, {
@@ -70,11 +76,14 @@ export class ItemsService {
     return updatedItem
   }
 
-  async delete(id: string): Promise<DeleteResult> {
+  async delete(id: string, user: User): Promise<DeleteResult> {
     const item = await this.itemsRepository.findOneBy({ id })
 
     if (!item)
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
+
+    if (item.userId !== user.id)
+      throw new BadRequestException('他人の商品を削除することはできません')
 
     const deletedItem = await this.itemsRepository.delete(id).catch((e) => {
       throw new InternalServerErrorException(e.message)
