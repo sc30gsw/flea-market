@@ -27,7 +27,7 @@ export class ItemsService {
   }
 
   async findById(id: string): Promise<Item> {
-    const item = await this.itemsRepository.findOneBy({ id })
+    const item = await this.itemsRepository.findOne({ where: { id } })
 
     if (!item)
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
@@ -56,7 +56,7 @@ export class ItemsService {
   }
 
   async updateStatus(id: string, user: User): Promise<UpdateResult> {
-    const item = await this.itemsRepository.findOneBy({ id })
+    const item = await this.itemsRepository.findOne({ where: { id } })
 
     if (!item)
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
@@ -77,7 +77,7 @@ export class ItemsService {
   }
 
   async delete(id: string, user: User): Promise<DeleteResult> {
-    const item = await this.itemsRepository.findOneBy({ id })
+    const item = await this.itemsRepository.findOne({ where: { id } })
 
     if (!item)
       throw new NotFoundException(`${id}に一致するデータが見つかりませんでした`)
